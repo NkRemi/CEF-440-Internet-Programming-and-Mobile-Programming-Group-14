@@ -1,0 +1,6 @@
+{
+  "name": "Adaptive Learner Hub",
+  "description": "An adaptive e-learning monorepo platform of web instructor tools and mobile student handset simulation streams",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

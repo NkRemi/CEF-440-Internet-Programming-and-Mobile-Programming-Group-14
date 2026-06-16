@@ -1,0 +1,103 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                 String           @id @default(uuid())
+  email              String           @unique
+  passwordHash       String
+  role               String           // "student" | "instructor"
+  name               String
+  languagePreference String           @default("en") // "en" | "fr"
+  createdAt          DateTime         @default(now())
+  submissions        QuizSubmission[]
+  enrolments         Enrolment[]
+}
+
+model Course {
+  id             String        @id @default(uuid())
+  title          String
+  description    String
+  instructorId   String
+  instructorName String
+  published      Boolean       @default(false)
+  createdAt      DateTime      @default(now())
+  materials      Material[]
+  quizzes        Quiz[]
+  enrolments     Enrolment[]
+}
+
+model Enrolment {
+  id        String   @id @default(uuid())
+  courseId  String
+  studentId String
+  enrolledAt DateTime @default(now())
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, studentId])
+}
+
+model Material {
+  id          String   @id @default(uuid())
+  courseId    String
+  title       String
+  type        String   // "video" | "document"
+  url         String
+  qualities   String   // JSON string: { high: string, low: string, audio: string }
+  transcripts String   // JSON string: Array of transcript lines with timestamps
+  status      String   // "processing" | "ready"
+  createdAt   DateTime @default(now())
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model Quiz {
+  id          String           @id @default(uuid())
+  courseId    String
+  title       String
+  published   Boolean          @default(false)
+  questions   String           // JSON string: Array of { id, text, options: string[], correctIndex }
+  createdAt   DateTime         @default(now())
+  course      Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  submissions QuizSubmission[]
+}
+
+model QuizSubmission {
+  id             String   @id @default(uuid())
+  quizId         String
+  studentId      String
+  studentName    String
+  score          Int
+  totalQuestions Int
+  answers        String   // JSON string: map of question ID to student's selected option index
+  submittedAt    DateTime @default(now())
+  quiz           Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  student        User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model LiveSession {
+  id                String   @id @default(uuid())
+  courseId          String   @unique
+  courseTitle       String
+  instructorId      String
+  active            Boolean  @default(false)
+  currentSlide      Int      @default(0)
+  currentTranscript String   @default("")
+  startedAt         DateTime @default(now())
+}
+
+model Progress {
+  id             String   @id @default(uuid())
+  courseId       String
+  studentId      String
+  completionRate Int      @default(0) // percentage
+  quizzesTaken   Int      @default(0)
+  lastAccessed   DateTime @default(now())
+
+  @@unique([courseId, studentId])
+}
